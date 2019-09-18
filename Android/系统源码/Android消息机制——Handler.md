@@ -644,7 +644,40 @@ public Looper getLooper() {
 
 在创建Handler 传参getLooper()时，如果线程存活并且mLooper ==null表示HandlerThread的run方法还没有执行完，Looper对象还是null，所以进入等待状态，当run方法执行完时，mLooper !=null，可以由源码看到执行了notifyAll()方法来唤醒线程，来完成Handler的创建。
 
+# Handler 引发的内存泄漏
 
+```
+    Handler handler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            return false;
+        }
+    });
+```
+
+使用内部类包括匿名类来创建Handler的时候Handler对象会隐式的持有Activity的引用。
+Handler通常伴随着一个耗时的后台线程一起出现，这个后台线程执行完毕后发送消息去更新UI，当Activity不在使用，它就有可能在GC检查时被回收掉，但是由于线程尚未执行完，而该线程持有Handler的引用，这个Handler又持有Activity的引用，就导致该Activity无法被回收。
+
+另外如果执行了postDelayed方法，那么在设定的delay到达之前，会有一条 MessageQueue -> Message -> Handler -> Activity 的链，导致你的Activity被持有引用而无法回收。
+
+解决：弱引用。
+
+```
+    static class MyHandler extends Handler {
+        WeakReference<Activity> weakReference;
+        MyHandler(Activity activity) {
+            weakReference = new WeakReference<>(activity);
+        }
+        @Override
+        public void handleMessage(Message msg) {
+            Activity activity = weakReference.get();
+            if (activity != null) {
+                // 处理activity的UI
+            }
+        }
+    }
+```
+使用内部静态类，这样内部类就不会在持有外部类即Activity的引用，所以不会导致外部类实例的内存泄漏。
 
 >参考
 >《Android 开发艺术探索》
@@ -653,6 +686,4 @@ public Looper getLooper() {
 >[https://blog.csdn.net/qq_30379689/article/details/53394061](https://blog.csdn.net/qq_30379689/article/details/53394061)
 >[https://www.jianshu.com/p/f0b23ee5a922](https://www.jianshu.com/p/f0b23ee5a922)
 >[https://www.cnblogs.com/leipDao/p/8005520.html](https://www.cnblogs.com/leipDao/p/8005520.html)
->
->
 
