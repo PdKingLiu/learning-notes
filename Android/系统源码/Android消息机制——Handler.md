@@ -571,6 +571,80 @@ ActivityThread通过ApplicationThread和AMS进行进程间通信，AMS以进程�
 ![在这里插入图片描述](https://imgconvert.csdnimg.cn/aHR0cHM6Ly91cGxvYWQtaW1hZ2VzLmppYW5zaHUuaW8vdXBsb2FkX2ltYWdlcy85NDQzNjUtMTg0ZWE5NGVjMWI1Y2UwNS5wbmc?x-oss-process=image/format,png)
 
 ![在这里插入图片描述](https://imgconvert.csdnimg.cn/aHR0cHM6Ly91cGxvYWQtaW1hZ2VzLmppYW5zaHUuaW8vdXBsb2FkX2ltYWdlcy85NDQzNjUtYzg2Yzg1MmZhMGE2NGQ1Yi5wbmc?x-oss-process=image/format,png)
+# HandlerThread
+Handler是一种可以使用Handler的Thread，他的实现很简单，就是在run方法中通过Looper.prapare()来创建消息队列，并通过Looper.loop()来开启消息循环。
+
+基本使用
+
+```
+ HandlerThread handlerThread = new HandlerThread("");
+ handlerThread.start();
+ Handler handler1 = new Handler(handlerThread.getLooper(), new Handler.Callback() {
+     @Override
+     public boolean handleMessage(Message msg) {
+         //处理UI
+         return true;
+     }
+ });
+ handler1.post(new Runnable() {
+     @Override
+     public void run() {
+         //子任务
+     }
+ });
+```
+上面步骤不能乱。
+
+源码
+
+```
+@Override
+public void run() {
+    mTid = Process.myTid();
+    Looper.prepare();
+    synchronized (this) {
+        mLooper = Looper.myLooper();
+        notifyAll();
+    }
+    Process.setThreadPriority(mPriority);
+    onLooperPrepared();
+    Looper.loop();
+    mTid = -1;
+}
+```
+
+从源码实现看，他和普通Thread有显著的不同，普通Thread主要是执行一个耗时任务，而HandlerThread在内存创建了消息队列，外界需要通过Handler的消息方式来通知HandlerThread执行一个具体的任务。
+
+注意到
+
+	notifyAll();
+
+这是由于线程同步问题的存在。
+
+	Handler handler1 = new Handler(handlerThread.getLooper(), new Handler.Callback() {
+
+```
+public Looper getLooper() {
+    if (!isAlive()) {
+        return null;
+    }
+    
+    // If the thread has been started, wait until the looper has been created.
+    synchronized (this) {
+        while (isAlive() && mLooper == null) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+            }
+        }
+    }
+    return mLooper;
+}
+```
+
+在创建Handler 传参getLooper()时，如果线程存活并且mLooper ==null表示HandlerThread的run方法还没有执行完，Looper对象还是null，所以进入等待状态，当run方法执行完时，mLooper !=null，可以由源码看到执行了notifyAll()方法来唤醒线程，来完成Handler的创建。
+
+
 
 >参考
 >《Android 开发艺术探索》
@@ -578,5 +652,7 @@ ActivityThread通过ApplicationThread和AMS进行进程间通信，AMS以进程�
 >[https://blog.csdn.net/ly502541243/article/details/52062179](https://blog.csdn.net/ly502541243/article/details/52062179)
 >[https://blog.csdn.net/qq_30379689/article/details/53394061](https://blog.csdn.net/qq_30379689/article/details/53394061)
 >[https://www.jianshu.com/p/f0b23ee5a922](https://www.jianshu.com/p/f0b23ee5a922)
+>[https://www.cnblogs.com/leipDao/p/8005520.html](https://www.cnblogs.com/leipDao/p/8005520.html)
 >
 >
+
