@@ -21,7 +21,7 @@
 
 ThreadLocal是一个数据结构，有点像HashMap，可以保存一个值，并且保证各个线程的数据互不干扰。
 
-```
+```java
 ThreadLocal<String> localName = new ThreadLocal();
 localName.set("aaa");
 String name = localName.get();
@@ -69,7 +69,7 @@ ThreadLoalMap 是一个类似HashMap的数据结构。
 
 看一看ThreadLoalMap插入一个key-values的实现。
 
-```
+```java
 private void set(ThreadLocal<?> key, Object value) {
     Entry[] tab = table;
     int len = tab.length;
@@ -112,7 +112,7 @@ private void set(ThreadLocal<?> key, Object value) {
 
 
 enqueueMessage源码
-```
+```java
     boolean enqueueMessage(Message msg, long when) {
         if (msg.target == null) {
             throw new IllegalArgumentException("Message must have a target.");
@@ -172,7 +172,7 @@ enqueueMessage源码
 
 next源码
 
-```
+```java
 
     Message next() {
 		·····
@@ -231,7 +231,7 @@ next是一个无限循环的方法，如果消息队列中没有消息，那么n
 
 Looper在Android消息机制中扮演着消息循环的角色，会不断的从MessageQueue中查看是否有消息，如果有新消息就会立即处理，否则就会阻塞在那里。在构造方法中会创建一个MessageQueue消息队列然后保存当前线程对象。
 
-```
+```java
     private Looper(boolean quitAllowed) {
         mQueue = new MessageQueue(quitAllowed);
         mThread = Thread.currentThread();
@@ -240,7 +240,7 @@ Looper在Android消息机制中扮演着消息循环的角色，会不断的从M
 
 Handler工作需要Looper，没有Looper的线程会报错，通过Looper.prepare()即可为当前线程创建一个Looper，通过Looper.loop()开启消息循环
 
-```
+```java
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -257,7 +257,7 @@ Looper提供quit和quitSafely来退出一个Looper，区别是前者会直接退
 
 Looper最重要的一个方法是loop方法，只有调用loop方法之后，消息循环才会真正的开始起作用。
 
-```
+```java
     public static void loop() {
         final Looper me = myLooper();
         if (me == null) {
@@ -363,7 +363,9 @@ Looper最重要的一个方法是loop方法，只有调用loop方法之后，消
 
 如果MessageQueue的next方法返回了新消息，Looper就会处理这条消息。
 
-	 msg.target.dispatchMessage(msg);
+```java
+ msg.target.dispatchMessage(msg);
+```
 
 msg.target是发送这条消息的对象。
 
@@ -378,13 +380,13 @@ Handler的主要工作是发送消息和接收消息。消息的发送可以通�
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20190917173749899.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0NvZGVGYXJtZXJfXw==,size_16,color_FFFFFF,t_70)
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20190917173815171.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0NvZGVGYXJtZXJfXw==,size_16,color_FFFFFF,t_70)
 
-```
+```java
     public final boolean sendMessage(Message msg)   {
         return sendMessageDelayed(msg, 0);
     }
 ```
 
-```
+```java
     public final boolean sendMessageDelayed(Message msg, long delayMillis)    {
         if (delayMillis < 0) {
             delayMillis = 0;
@@ -393,7 +395,7 @@ Handler的主要工作是发送消息和接收消息。消息的发送可以通�
     }
 ```
 
-```
+```java
     public boolean sendMessageAtTime(Message msg, long uptimeMillis) {
         MessageQueue queue = mQueue;
         if (queue == null) {
@@ -406,7 +408,7 @@ Handler的主要工作是发送消息和接收消息。消息的发送可以通�
     }
 ```
 
-```
+```java
     private boolean enqueueMessage(MessageQueue queue, Message msg, long uptimeMillis) {
         msg.target = this;
         if (mAsynchronous) {
@@ -418,7 +420,7 @@ Handler的主要工作是发送消息和接收消息。消息的发送可以通�
 
 发送消息的方法最终会调用`sendMessageAtTime`并且最后调用` queue.enqueueMessage(msg, uptimeMillis);`请消息插入到消息队列。然后MessageQueue的next方法就会返回这个消息给Looper，Looper接收到消息后交给Handler处理，这样就会调用dispatchMessage()方法。
 
-```
+```java
     public void dispatchMessage(Message msg) {
         if (msg.callback != null) {
             handleCallback(msg);
@@ -435,7 +437,7 @@ Handler的主要工作是发送消息和接收消息。消息的发送可以通�
 可以清楚的看到，先检查Message的callback是否为null，不为null就通过handleCallBack来处理。
 Message的callBack的一个Runnable对象，实际上是post方法传递的Runnable
 
-```
+```java
 	private static void handleCallback(Message message) {
 	    message.callback.run();
 	}
@@ -444,7 +446,7 @@ handleCallback逻辑很简单，实际上就是运行run方法。
 
 然后就是mCallback，检查mCallBack是否为null，不为null就调用他的handleMessage方法。
 
-```
+```java
   public interface Callback {
       /**
        * @param msg A {@link android.os.Message Message} object
@@ -456,7 +458,7 @@ handleCallback逻辑很简单，实际上就是运行run方法。
 
 Callback是一个接口，就是在创建Handler Handler handler = new Handler(callback)时构造方法里面的参数。
 
-```
+```java
  Handler handler = new Handler(new Handler.Callback() {
      @Override
      public boolean handleMessage(Message msg) {
@@ -467,7 +469,7 @@ Callback是一个接口，就是在创建Handler Handler handler = new Handler(c
 
 最后调用Handler本身的方法handleMessage处理消息。它是一个空实现。
 
-```
+```java
     /**
      * Subclasses must implement this to receive messages.
      */
@@ -475,13 +477,12 @@ Callback是一个接口，就是在创建Handler Handler handler = new Handler(c
     }
 ```
 
-
 Handler的流程处理消息的流程图。
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20190917171456625.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0NvZGVGYXJtZXJfXw==,size_16,color_FFFFFF,t_70)
 
 # 主线程消息循环
 
-```
+```java
     public static void main(String[] args) {
         Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "ActivityThreadMain");
 
@@ -535,7 +536,7 @@ Handler的流程处理消息的流程图。
 ```
 主线程通过Looper.prepareMainLooper(); 来创建Looper和MessageQueue。
 
-```
+```java
   class H extends Handler {
         public static final int BIND_APPLICATION        = 110;
         public static final int EXIT_APPLICATION        = 111;
@@ -576,7 +577,7 @@ Handler是一种可以使用Handler的Thread，他的实现很简单，就是在
 
 基本使用
 
-```
+```java
  HandlerThread handlerThread = new HandlerThread("");
  handlerThread.start();
  Handler handler1 = new Handler(handlerThread.getLooper(), new Handler.Callback() {
@@ -597,7 +598,7 @@ Handler是一种可以使用Handler的Thread，他的实现很简单，就是在
 
 源码
 
-```
+```java
 @Override
 public void run() {
     mTid = Process.myTid();
@@ -617,13 +618,17 @@ public void run() {
 
 注意到
 
-	notifyAll();
+```java
+notifyAll();
+```
 
 这是由于线程同步问题的存在。
 
-	Handler handler1 = new Handler(handlerThread.getLooper(), new Handler.Callback() {
-
+```java
+Handler handler1 = new Handler(handlerThread.getLooper(), new Handler.Callback() {
 ```
+
+```java
 public Looper getLooper() {
     if (!isAlive()) {
         return null;
@@ -646,7 +651,7 @@ public Looper getLooper() {
 
 # Handler 引发的内存泄漏
 
-```
+```java
     Handler handler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -662,7 +667,7 @@ Handler通常伴随着一个耗时的后台线程一起出现，这个后台线�
 
 解决：弱引用。
 
-```
+```java
     static class MyHandler extends Handler {
         WeakReference<Activity> weakReference;
         MyHandler(Activity activity) {

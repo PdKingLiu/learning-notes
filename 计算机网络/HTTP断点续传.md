@@ -92,8 +92,12 @@ HTTP1.1协议定义了断点续传相关的HTTPRange和Content-Range字段。
 
 一个简单的实现大概如下：
 
- 1. 客户端下载一个1024K的文件，已经下载了其中512K 
-
-  2. 网络中断，客户端请求续传，因此需要在HTTP头中申明本次需要续传的片段： Range:bytes=512000-  这个头通知服务端从文件的512K位置开始传输文件 
-
+  1. 客户端下载一个1024K的文件，已经下载了其中512K 
+   2. 网络中断，客户端请求续传，因此需要在HTTP头中申明本次需要续传的片段： Range:bytes=512000-  这个头通知服务端从文件的512K位置开始传输文件 
   3. 服务端收到断点续传请求，从文件的512K位置开始传输，并且在HTTP头中增加：Content-Range:bytes 512000-/1024000  并且此时服务端返回的HTTP状态码应该是206，而不是200。 
+
+
+
+> 参考
+> [https://juejin.im/post/5b555f055188251af25700aa](https://juejin.im/post/5b555f055188251af25700aa)
+> [https://www.iteye.com/blog/uule-2429222](https://www.iteye.com/blog/uule-2429222)
