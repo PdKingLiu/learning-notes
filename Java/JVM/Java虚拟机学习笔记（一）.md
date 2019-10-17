@@ -1,4 +1,5 @@
-[toc]
+[TOC]
+
 # Java虚拟机结构
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20191010141724468.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0NvZGVGYXJtZXJfXw==,size_16,color_FFFFFF,t_70)
 java虚拟机包括运行时`数据区域`、`执行引擎`、`本地接口`和`本地方法库`。
@@ -16,6 +17,9 @@ Class文件格式包含了很多关键的信息，其中的u4 u2 表示的事进
 - u2: 2字节，无符号类型
 - u4: 4字节，无符号类型
 - u8: 8字节，无符号类型
+
+![https://camo.githubusercontent.com/b500a94627f72a03fd9ce4063cea156512110ade/68747470733a2f2f6d792d626c6f672d746f2d7573652e6f73732d636e2d6265696a696e672e616c6979756e63732e636f6d2f323031392d362f2545372542312542422545362539362538372545342542422542362545352541442539372545382538412538322545372541302538312545372542422539332545362539452538342545372542422538342545372542422538372545372541342542412545362538342538462545352539422542452e706e67](https://imgconvert.csdnimg.cn/aHR0cHM6Ly9jYW1vLmdpdGh1YnVzZXJjb250ZW50LmNvbS9iNTAwYTk0NjI3ZjcyYTAzZmQ5Y2U0MDYzY2VhMTU2NTEyMTEwYWRlLzY4NzQ3NDcwNzMzYTJmMmY2ZDc5MmQ2MjZjNmY2NzJkNzQ2ZjJkNzU3MzY1MmU2ZjczNzMyZDYzNmUyZDYyNjU2OTZhNjk2ZTY3MmU2MTZjNjk3OTc1NmU2MzczMmU2MzZmNmQyZjMyMzAzMTM5MmQzNjJmMjU0NTM3MjU0MjMxMjU0MjQyMjU0NTM2MjUzOTM2MjUzODM3MjU0NTM0MjU0MjQyMjU0MjM2MjU0NTM1MjU0MTQ0MjUzOTM3MjU0NTM4MjUzODQxMjUzODMyMjU0NTM3MjU0MTMwMjUzODMxMjU0NTM3MjU0MjQyMjUzOTMzMjU0NTM2MjUzOTQ1MjUzODM0MjU0NTM3MjU0MjQyMjUzODM0MjU0NTM3MjU0MjQyMjUzODM3MjU0NTM3MjU0MTM0MjU0MjQxMjU0NTM2MjUzODM0MjUzODQ2MjU0NTM1MjUzOTQyMjU0MjQ1MmU3MDZlNjc?x-oss-process=image/format,png)
+[https://github.com/Snailclimb/JavaGuide/blob/master/docs/java/jvm/%E7%B1%BB%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84.md](https://github.com/Snailclimb/JavaGuide/blob/master/docs/java/jvm/%E7%B1%BB%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84.md)
 
 ## 类的生命周期
 class文件加载至虚拟机内存到从内存中卸载称为类的声明周期。
@@ -55,16 +59,27 @@ Java内存区域划分为：
 -	程序计数器
 -	Java虚拟机栈
 -	本地方法栈
--	Java堆和方法区
+-	Java堆
+-	方法区
+
+**JDK8 之前**
+![在这里插入图片描述](https://img-blog.csdnimg.cn/2019101720352178.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0NvZGVGYXJtZXJfXw==,size_16,color_FFFFFF,t_70)
+**JDK8** 
+![在这里插入图片描述](https://img-blog.csdnimg.cn/2019101720362124.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0NvZGVGYXJtZXJfXw==,size_16,color_FFFFFF,t_70)
 
 **1. 程序计数器**
 
-为了保证程序能持续执行下去，处理器必须具有某些手段来确定下一条指令的地址，这就是程序计数器的作用。
+程序计数器是一块较小的内存空间，可以看作是当前线程所执行的**字节码的行号指示器**。字节码解释器工作时**通过改变这个计数器的值来选取下一条需要执行的字节码指令**，**分支、循环、跳转、异常处理、线程恢复等功能都需要依赖这个计数器来完成**。
+
+**为了线程切换后能恢复到正确的执行位置，每条线程都需要有一个独立的程序计数器，各线程之间计数器互不影响，独立存储，我们称这类内存区域为“线程私有”的内存。**
+
+- 字节码解释器通过**改变程序计数器**来依次读取指令，从而**实现代码的流程控制**，如：顺序执行、选择、循环、异常处理。
+- 在多线程的情况下，程序计数器用于**记录当前线程执行的位置**，从而当线程被切换回来的时候能够知道该线程上次运行到哪儿了。
 
 **2. Java虚拟机栈**
-- 每一个Java虚拟机线程都一个线程私有的Java虚拟机栈。他的生命周期与线程相同。
+- 每一个Java虚拟机线程都一个**线程私有的Java虚拟机栈**。他的生命周期与线程相同。
 - Java虚拟机栈存储线程中Java方法调用的状态，包括局部变量、参数、返回值以及运算的中间结构等。
-- Java虚拟机栈包含多个栈帧，一个栈帧用来存储局部变量表、操作数栈、动态链接、方法出口等信息。当线程调用一个Java的方法时，虚拟机栈压入一个栈帧，该方法执行完后，这个栈帧就会弹出。
+- Java虚拟机栈**包含多个栈帧**，一个栈帧用来存储**局部变量表、操作数栈、动态链接、方法出口**等信息。当线程调用一个Java的方法时，虚拟机栈压入一个栈帧，该方法执行完后，这个栈帧就会弹出。
 
 栈内存异常：
 
@@ -77,7 +92,7 @@ Java内存区域划分为：
 
 **4. Java堆**
 
-Java堆是所有线程共享的内存区域，Java堆用来存放对象实例。几乎所有的对象实例都在这里分配内存。堆内存对象被垃圾回收器管理。
+Java堆是所有线程共享的内存区域，Java堆用来存放对象实例。**几乎所有的对象实例以及数组都在这里分配内存**。堆内存对象被垃圾回收器管理。
 
 Java堆从内存回收分可以分为新生代和老年代。从内存分配可划分出多个线程私有的分配缓存区。
 
@@ -85,7 +100,7 @@ Java堆从内存回收分可以分为新生代和老年代。从内存分配可�
 
 **5. 方法区**
 
-方法区是被所有线程共享的运行时内存区域，用来存储已经被Java虚拟机加载的类的结构信息，包括运行时常量池，字段和方法信息，静态变量等数据。方法区是Java堆的逻辑组成部分，他在物理上不需要连续，并且可以选择在方法区中不实现垃圾回收。
+方法区是被**所有线程共享的运行时内存区域**，用来存储已经被Java虚拟机加载的**类的结构信息**，包括**运行时常量池，字段和方法信息，静态变量等数据**。方法区是Java堆的逻辑组成部分，他在物理上不需要连续，并且可以选择在方法区中不实现垃圾回收。
 
 如果方法区内存空间不满足内存分配需求时，Java虚拟机会抛出OutOfMemoryError
 
@@ -93,6 +108,10 @@ Java堆从内存回收分可以分为新生代和老年代。从内存分配可�
 
 运行时常量池不是运行时数据区域的其中一份子，而是方法区的一部分。
 
-class文件不仅包含类的版本、接口、字段和方法等信息，还包含常量池，他用来存放编译时期生成的字面量和符号引用，这些内容会在类加载后存放在运行时常量池中。运行时常量池可以理解是类或接口的常量池运行时表现形式。
+class文件不仅包含类的版本、接口、字段和方法等信息，还包含常量池，他用来**存放编译时期生成的字面量和符号引用**，这些内容会在类加载后存放在运行时常量池中。运行时常量池可以理解是类或接口的常量池运行时表现形式。
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20191017204743986.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0NvZGVGYXJtZXJfXw==,size_16,color_FFFFFF,t_70)
 
 当创建类或接口时，如果运行时常量池所需的内存超过了方法区所能提供的最大值，Java虚拟机会抛出OutOfMemoryError异常。
+
+**JDK1.7 及之后版本的 JVM 已经将运行时常量池从方法区中移了出来，在 Java 堆（Heap）中开辟了一块区域存放运行时常量池。**
